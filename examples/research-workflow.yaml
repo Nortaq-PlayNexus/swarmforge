@@ -1,0 +1,59 @@
+name: research-and-write
+description: Research a topic and produce a summary report
+
+variables:
+  topic: "AI safety"
+  output_format: "markdown"
+
+agents:
+  - name: researcher
+    type: llm
+    model: gpt-4o
+    system_prompt: >
+      You are a research agent. Your job is to gather and synthesize
+      information about a given topic. Be thorough and cite key points.
+
+  - name: writer
+    type: llm
+    model: gpt-4o
+    system_prompt: >
+      You are a technical writer. Take the research provided and
+      produce a clear, well-structured summary report.
+      Output in markdown format.
+
+  - name: reviewer
+    type: llm
+    model: gpt-4o
+    system_prompt: >
+      You are an editorial reviewer. Review the draft and provide
+      feedback on accuracy, clarity, and completeness.
+      Then produce a final polished version.
+
+steps:
+  - name: research
+    agent: researcher
+    input:
+      task: "Research the following topic thoroughly: {{topic}}"
+    output: research_output
+
+  - name: write_draft
+    agent: writer
+    input:
+      task: "Write a summary report based on this research:"
+      research: "{{research_output}}"
+    output: draft
+
+  - name: review_and_finalize
+    agent: reviewer
+    input:
+      task: "Review and finalize this draft:"
+      draft: "{{draft}}"
+    output: final_report
+
+channels:
+  - name: research-feed
+    source: researcher
+    target: writer
+  - name: draft-feed
+    source: writer
+    target: reviewer

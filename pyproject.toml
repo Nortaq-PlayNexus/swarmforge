@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.backends._legacy:_Backend"
+
+[project]
+name = "swarmforge"
+version = "1.0.0"
+description = "Visual multi-agent AI orchestrator — design, deploy, and monitor collaborative agent workflows."
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.11"
+authors = [{ name = "PlayNexus" }]
+keywords = ["ai", "agents", "multi-agent", "orchestration", "llm", "workflows"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries :: Application Frameworks",
+]
+dependencies = [
+    "requests>=2.31.0",
+    "rich>=13.0.0",
+    "pyyaml>=6.0",
+]
+
+[project.scripts]
+swarmforge = "swarmforge.__main__:main"
+
+[project.urls]
+Homepage = "https://github.com/Nortaq-PlayNexus/swarmforge"
+Repository = "https://github.com/Nortaq-PlayNexus/swarmforge"
+
+[tool.setuptools.packages.find]
+include = ["swarmforge*"]
