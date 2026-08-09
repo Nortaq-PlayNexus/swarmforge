@@ -8,6 +8,8 @@ from pathlib import Path
 from swarmforge import __version__
 from swarmforge.core.engine import SwarmEngine
 from swarmforge.core.workflow import Workflow
+from swarmforge.core.templates import ALL_TEMPLATES
+from swarmforge.core.visualizer import WorkflowVisualizer
 from swarmforge.ui.display import Display
 
 
@@ -29,6 +31,17 @@ def build_parser() -> argparse.ArgumentParser:
 
     info = sub.add_parser("info", help="Show SwarmForge info and built-in agents")
 
+    sub.add_parser("templates", help="List available workflow templates")
+
+    new_cmd = sub.add_parser("new", help="Scaffold a workflow from a template")
+    new_cmd.add_argument("--template", type=str, required=True,
+                         help="Template name (research, data-pipeline, code-review, customer-support)")
+    new_cmd.add_argument("--output", type=str, default="workflow.yaml",
+                         help="Output file path (default: workflow.yaml)")
+
+    visualize = sub.add_parser("visualize", help="Generate Mermaid diagram from workflow YAML")
+    visualize.add_argument("workflow", type=str, help="Path to workflow YAML file")
+
     return parser
 
 
@@ -43,6 +56,46 @@ def main() -> int:
 
     if args.command == "info":
         display.print_info()
+        return 0
+
+    if args.command == "templates":
+        display.print_templates_list(ALL_TEMPLATES)
+        return 0
+
+    if args.command == "new":
+        template_name = args.template
+        if template_name not in ALL_TEMPLATES:
+            display.print_error(f"Unknown template '{template_name}'. Available: {', '.join(ALL_TEMPLATES.keys())}")
+            return 1
+
+        import copy
+        template_data = copy.deepcopy(ALL_TEMPLATES[template_name])
+        output_path = Path(args.output)
+
+        with open(output_path, "w") as f:
+            yaml.dump(template_data, f, default_flow_style=False, sort_keys=False)
+
+        display.print_success(f"Created workflow '{template_name}' at {output_path}")
+        return 0
+
+    if args.command == "visualize":
+        path = Path(args.workflow)
+        if not path.exists():
+            display.print_error(f"File not found: {path}")
+            return 1
+
+        with open(path) as f:
+            spec = yaml.safe_load(f)
+
+        try:
+            wf = Workflow.from_dict(spec)
+        except Exception as e:
+            display.print_error(f"Invalid workflow: {e}")
+            return 1
+
+        viz = WorkflowVisualizer(wf)
+        mermaid_code = viz.generate()
+        display.print_workflow_diagram(mermaid_code)
         return 0
 
     if args.command == "validate":
@@ -86,6 +139,9 @@ def main() -> int:
 
         engine = SwarmEngine(wf, display=display)
         result = engine.run()
+
+        if result.get("execution_history"):
+            display.print_step_timeline(result["execution_history"])
 
         if result.get("success"):
             display.print_success("Workflow completed successfully!")

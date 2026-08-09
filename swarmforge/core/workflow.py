@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, Optional
 
 
 @dataclass
@@ -22,6 +22,11 @@ class StepDef:
     input_mapping: dict[str, str] = field(default_factory=dict)
     output_key: str = ""
     condition: str = ""
+    retry_count: int = 0
+    retry_backoff: float = 1.0
+    on_failure: str = "abort"
+    timeout: Optional[int] = None
+    depends_on: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -67,6 +72,11 @@ class Workflow:
                 input_mapping=s.get("input", {}),
                 output_key=s.get("output", s["name"]),
                 condition=s.get("condition", ""),
+                retry_count=s.get("retry_count", 0),
+                retry_backoff=s.get("retry_backoff", 1.0),
+                on_failure=s.get("on_failure", "abort"),
+                timeout=s.get("timeout"),
+                depends_on=s.get("depends_on", []),
             ))
 
         channels = []

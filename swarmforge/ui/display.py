@@ -46,6 +46,56 @@ class Display:
         console.print(table)
         console.print()
 
+    def print_workflow_diagram(self, mermaid_code: str):
+        console.print()
+        console.print(
+            Panel(
+                f"[bold cyan]Workflow Diagram[/bold cyan]\n\n"
+                f"```mermaid\n{mermaid_code}\n```",
+                border_style="blue", expand=True,
+            )
+        )
+        console.print()
+
+    def print_templates_list(self, templates: dict[str, dict]):
+        console.print()
+        table = Table(box=box.ROUNDED, title="Available Workflow Templates")
+        table.add_column("Name", style="bold cyan")
+        table.add_column("Description", style="white")
+        table.add_column("Steps", justify="right", style="green")
+        table.add_column("Agents", justify="right", style="yellow")
+        for name, tmpl in templates.items():
+            table.add_row(
+                name,
+                tmpl.get("description", ""),
+                str(len(tmpl.get("steps", []))),
+                str(len(tmpl.get("agents", []))),
+            )
+        console.print(table)
+        console.print()
+
+    def print_step_timeline(self, history: list[dict]):
+        console.print()
+        table = Table(box=box.ROUNDED, title="Execution Timeline")
+        table.add_column("Step", style="bold cyan")
+        table.add_column("Status", justify="center")
+        table.add_column("Duration", justify="right", style="yellow")
+        table.add_column("Retries", justify="right", style="magenta")
+        table.add_column("Error", style="red")
+        for entry in history:
+            status = "[green]OK[/green]" if entry.get("success") else "[red]FAIL[/red]"
+            if entry.get("skipped"):
+                status = "[dim]SKIP[/dim]"
+            table.add_row(
+                entry.get("name", ""),
+                status,
+                f"{entry.get('elapsed_seconds', 0):.2f}s",
+                str(entry.get("retries_used", 0)),
+                entry.get("error", "")[:60],
+            )
+        console.print(table)
+        console.print()
+
     def print_error(self, message: str):
         console.print(f"  [bold red]✗[/bold red] {message}")
 

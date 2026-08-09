@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 import json
+import re
 import requests
 from abc import ABC, abstractmethod
 from typing import Any
@@ -16,6 +17,8 @@ class BaseAgent(ABC):
         self.config = config or {}
         self.memory: SharedMemory | None = None
         self.bus: MessageBus | None = None
+        self.input_schema: dict[str, Any] | None = self.config.get("input_schema")
+        self.output_schema: dict[str, Any] | None = self.config.get("output_schema")
 
     def attach(self, memory: SharedMemory, bus: MessageBus):
         self.memory = memory
@@ -24,6 +27,38 @@ class BaseAgent(ABC):
     @abstractmethod
     def run(self, input_data: dict[str, Any]) -> dict[str, Any]:
         ...
+
+    def validate_input(self, input_data: dict[str, Any]) -> list[str]:
+        errors = []
+        if not self.input_schema:
+            return errors
+        required = self.input_schema.get("required", [])
+        for field in required:
+            if field not in input_data:
+                errors.append(f"Missing required input field: {field}")
+        properties = self.input_schema.get("properties", {})
+        for key, prop in properties.items():
+            if key in input_data:
+                expected_type = prop.get("type")
+                if expected_type == "string" and not isinstance(input_data[key], str):
+                    errors.append(f"Field '{key}' must be a string")
+                elif expected_type == "number" and not isinstance(input_data[key], (int, float)):
+                    errors.append(f"Field '{key}' must be a number")
+                elif expected_type == "array" and not isinstance(input_data[key], list):
+                    errors.append(f"Field '{key}' must be an array")
+                elif expected_type == "object" and not isinstance(input_data[key], dict):
+                    errors.append(f"Field '{key}' must be an object")
+        return errors
+
+    def validate_output(self, output: dict[str, Any]) -> list[str]:
+        errors = []
+        if not self.output_schema:
+            return errors
+        required = self.output_schema.get("required", [])
+        for field in required:
+            if field not in output:
+                errors.append(f"Missing required output field: {field}")
+        return errors
 
     def _memory_get(self, key: str, default: Any = None) -> Any:
         if self.memory:
@@ -34,10 +69,10 @@ class BaseAgent(ABC):
         if self.memory:
             self.memory.set(key, value, source=self.name)
 
-    def _send_message(self, channel: str, target: str, payload: Any) -> str:
+    def _send_message(self, channel: str, receiver: str, payload: Any) -> str:
         if self.bus:
             return self.bus.send(Message(
-                channel=channel, sender=self.name, target=target, payload=payload
+                channel=channel, sender=self.name, receiver=receiver, payload=payload
             ))
         return ""
 
@@ -161,11 +196,118 @@ class AggregateAgent(BaseAgent):
         return {"merged": merged, "count": len(sources), "success": True}
 
 
+class PythonAgent(BaseAgent):
+    """Agent that executes Python code snippets."""
+
+    def __init__(self, name: str, config: dict[str, Any] | None = None):
+        super().__init__(name, config)
+        self.allowed_modules = self.config.get("allowed_modules", ["json", "math", "re"])
+
+    def run(self, input_data: dict[str, Any]) -> dict[str, Any]:
+        code = input_data.get("code", "")
+        if not code:
+            return {"response": "", "success": False, "error": "No code provided"}
+
+        safe_globals = {"__builtins__": {}}
+        for mod_name in self.allowed_modules:
+            try:
+                import importlib
+                safe_globals[mod_name] = importlib.import_module(mod_name)
+            except ImportError:
+                pass
+
+        try:
+            exec_result = {}
+            safe_locals = {"input_data": input_data, "result": exec_result}
+            exec(code, safe_globals, safe_locals)
+            result = safe_locals.get("result", exec_result)
+            return {"response": json.dumps(result, default=str), "result": result, "success": True}
+        except Exception as e:
+            return {"response": "", "success": False, "error": f"Execution error: {e}"}
+
+
+class HTTPAgent(BaseAgent):
+    """Agent that makes HTTP requests."""
+
+    def __init__(self, name: str, config: dict[str, Any] | None = None):
+        super().__init__(name, config)
+        self.base_url = self.config.get("base_url", "")
+        self.default_headers = self.config.get("headers", {})
+
+    def run(self, input_data: dict[str, Any]) -> dict[str, Any]:
+        method = input_data.get("method", "GET").upper()
+        url = input_data.get("url", "")
+        if not url and self.base_url:
+            url = self.base_url
+        if not url:
+            return {"response": "", "success": False, "error": "No URL provided"}
+
+        headers = {**self.default_headers, **input_data.get("headers", {})}
+        payload = input_data.get("payload")
+        timeout = input_data.get("timeout", 30)
+
+        try:
+            resp = requests.request(
+                method, url, headers=headers, json=payload, timeout=timeout,
+            )
+            resp.raise_for_status()
+            try:
+                body = resp.json()
+            except ValueError:
+                body = resp.text
+            return {
+                "response": json.dumps(body, default=str) if isinstance(body, (dict, list)) else str(body),
+                "status_code": resp.status_code,
+                "success": True,
+            }
+        except Exception as e:
+            return {"response": "", "success": False, "error": str(e)}
+
+
+class ConditionalAgent(BaseAgent):
+    """Agent that routes based on input content matching patterns."""
+
+    def __init__(self, name: str, config: dict[str, Any] | None = None):
+        super().__init__(name, config)
+        self.routes: dict[str, str] = self.config.get("routes", {})
+        self.match_field = self.config.get("match_field", "input")
+        self.match_type = self.config.get("match_type", "contains")
+
+    def run(self, input_data: dict[str, Any]) -> dict[str, Any]:
+        text = input_data.get(self.match_field, "")
+        if isinstance(text, dict):
+            text = json.dumps(text)
+        text = str(text).lower()
+
+        matched_route = self.routes.get("default", "")
+
+        for pattern, route in self.routes.items():
+            if pattern == "default":
+                continue
+            if self.match_type == "contains" and pattern.lower() in text:
+                matched_route = route
+                break
+            elif self.match_type == "regex" and re.search(pattern, text):
+                matched_route = route
+                break
+            elif self.match_type == "exact" and pattern.lower() == text:
+                matched_route = route
+                break
+
+        if matched_route and self.bus:
+            self._send_message("routing", matched_route, input_data)
+
+        return {"routed_to": matched_route, "success": bool(matched_route)}
+
+
 AGENT_TYPES = {
     "llm": LLMAgent,
     "tool": ToolAgent,
     "router": RouterAgent,
     "aggregate": AggregateAgent,
+    "python": PythonAgent,
+    "http": HTTPAgent,
+    "conditional": ConditionalAgent,
 }
 
 
