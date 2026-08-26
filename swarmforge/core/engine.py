@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 import time
-import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed, TimeoutError as FuturesTimeout
 from dataclasses import dataclass
 from datetime import datetime, timezone
