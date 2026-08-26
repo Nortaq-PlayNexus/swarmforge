@@ -25,8 +25,7 @@ class BaseAgent(ABC):
         self.bus = bus
 
     @abstractmethod
-    def run(self, input_data: dict[str, Any]) -> dict[str, Any]:
-        ...
+    def run(self, input_data: dict[str, Any]) -> dict[str, Any]: ...
 
     def validate_input(self, input_data: dict[str, Any]) -> list[str]:
         errors = []
@@ -42,11 +41,15 @@ class BaseAgent(ABC):
                 expected_type = prop.get("type")
                 if expected_type == "string" and not isinstance(input_data[key], str):
                     errors.append(f"Field '{key}' must be a string")
-                elif expected_type == "number" and not isinstance(input_data[key], (int, float)):
+                elif expected_type == "number" and not isinstance(
+                    input_data[key], (int, float)
+                ):
                     errors.append(f"Field '{key}' must be a number")
                 elif expected_type == "array" and not isinstance(input_data[key], list):
                     errors.append(f"Field '{key}' must be an array")
-                elif expected_type == "object" and not isinstance(input_data[key], dict):
+                elif expected_type == "object" and not isinstance(
+                    input_data[key], dict
+                ):
                     errors.append(f"Field '{key}' must be an object")
         return errors
 
@@ -71,9 +74,14 @@ class BaseAgent(ABC):
 
     def _send_message(self, channel: str, receiver: str, payload: Any) -> str:
         if self.bus:
-            return self.bus.send(Message(
-                channel=channel, sender=self.name, receiver=receiver, payload=payload
-            ))
+            return self.bus.send(
+                Message(
+                    channel=channel,
+                    sender=self.name,
+                    receiver=receiver,
+                    payload=payload,
+                )
+            )
         return ""
 
     def _receive_message(self, channel: str, timeout: float = 5.0) -> Message | None:
@@ -88,7 +96,9 @@ class LLMAgent(BaseAgent):
     def __init__(self, name: str, config: dict[str, Any] | None = None):
         super().__init__(name, config)
         self.model = self.config.get("model", "gpt-4o")
-        self.system_prompt = self.config.get("system_prompt", "You are a helpful AI assistant.")
+        self.system_prompt = self.config.get(
+            "system_prompt", "You are a helpful AI assistant."
+        )
         self.temperature = self.config.get("temperature", 0.7)
         self.base_url = self.config.get("base_url", "https://api.openai.com/v1")
         self.api_key = self.config.get("api_key", "")
@@ -113,7 +123,9 @@ class LLMAgent(BaseAgent):
         try:
             resp = requests.post(
                 f"{self.base_url}/chat/completions",
-                headers=headers, json=payload, timeout=120
+                headers=headers,
+                json=payload,
+                timeout=120,
             )
             resp.raise_for_status()
             content = resp.json()["choices"][0]["message"]["content"]
@@ -155,7 +167,11 @@ class ToolAgent(BaseAgent):
             except Exception as e:
                 return {"result": None, "success": False, "error": str(e)}
         else:
-            return {"result": None, "success": False, "error": f"Unknown tool: {tool_name}"}
+            return {
+                "result": None,
+                "success": False,
+                "error": f"Unknown tool: {tool_name}",
+            }
 
 
 class RouterAgent(BaseAgent):
@@ -201,7 +217,9 @@ class PythonAgent(BaseAgent):
 
     def __init__(self, name: str, config: dict[str, Any] | None = None):
         super().__init__(name, config)
-        self.allowed_modules = self.config.get("allowed_modules", ["json", "math", "re"])
+        self.allowed_modules = self.config.get(
+            "allowed_modules", ["json", "math", "re"]
+        )
 
     def run(self, input_data: dict[str, Any]) -> dict[str, Any]:
         code = input_data.get("code", "")
@@ -212,6 +230,7 @@ class PythonAgent(BaseAgent):
         for mod_name in self.allowed_modules:
             try:
                 import importlib
+
                 safe_globals[mod_name] = importlib.import_module(mod_name)
             except ImportError:
                 pass
@@ -221,7 +240,11 @@ class PythonAgent(BaseAgent):
             safe_locals = {"input_data": input_data, "result": exec_result}
             exec(code, safe_globals, safe_locals)
             result = safe_locals.get("result", exec_result)
-            return {"response": json.dumps(result, default=str), "result": result, "success": True}
+            return {
+                "response": json.dumps(result, default=str),
+                "result": result,
+                "success": True,
+            }
         except Exception as e:
             return {"response": "", "success": False, "error": f"Execution error: {e}"}
 
@@ -248,7 +271,11 @@ class HTTPAgent(BaseAgent):
 
         try:
             resp = requests.request(
-                method, url, headers=headers, json=payload, timeout=timeout,
+                method,
+                url,
+                headers=headers,
+                json=payload,
+                timeout=timeout,
             )
             resp.raise_for_status()
             try:
@@ -256,7 +283,9 @@ class HTTPAgent(BaseAgent):
             except ValueError:
                 body = resp.text
             return {
-                "response": json.dumps(body, default=str) if isinstance(body, (dict, list)) else str(body),
+                "response": json.dumps(body, default=str)
+                if isinstance(body, (dict, list))
+                else str(body),
                 "status_code": resp.status_code,
                 "success": True,
             }

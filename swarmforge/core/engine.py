@@ -2,7 +2,11 @@
 
 from __future__ import annotations
 import time
-from concurrent.futures import ThreadPoolExecutor, as_completed, TimeoutError as FuturesTimeout
+from concurrent.futures import (
+    ThreadPoolExecutor,
+    as_completed,
+    TimeoutError as FuturesTimeout,
+)
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Any
@@ -25,7 +29,9 @@ class StepResult:
 
 
 class SwarmEngine:
-    def __init__(self, workflow: Workflow, display: Any = None, config: dict | None = None):
+    def __init__(
+        self, workflow: Workflow, display: Any = None, config: dict | None = None
+    ):
         self.workflow = workflow
         self.display = display
         self.config = config or {}
@@ -74,7 +80,9 @@ class SwarmEngine:
         self._abort = False
 
         if self.display:
-            self.display.print_workflow_start(self.workflow.name, len(self.workflow.steps))
+            self.display.print_workflow_start(
+                self.workflow.name, len(self.workflow.steps)
+            )
 
         self._resolve_variables()
 
@@ -125,7 +133,7 @@ class SwarmEngine:
 
     def _build_execution_groups(self) -> list[list[StepDef]]:
         """Build groups of steps that can execute in parallel using dependency info."""
-        step_map = {s.name: s for s in self.workflow.steps}
+        {s.name: s for s in self.workflow.steps}
         completed: set[str] = set()
         groups: list[list[StepDef]] = []
 
@@ -154,8 +162,12 @@ class SwarmEngine:
                     if self.display:
                         self.display.print_step_skip(step.name, step.condition)
                     result = StepResult(
-                        name=step.name, success=True, output={}, elapsed_seconds=0,
-                        retries_used=0, skipped=True,
+                        name=step.name,
+                        success=True,
+                        output={},
+                        elapsed_seconds=0,
+                        retries_used=0,
+                        skipped=True,
                     )
                     self._execution_history.append(result)
                     self._steps_completed += 1
@@ -169,8 +181,12 @@ class SwarmEngine:
                     result = future.result()
                 except Exception as e:
                     result = StepResult(
-                        name=step.name, success=False, output={}, elapsed_seconds=0,
-                        retries_used=0, error=str(e),
+                        name=step.name,
+                        success=False,
+                        output={},
+                        elapsed_seconds=0,
+                        retries_used=0,
+                        error=str(e),
                     )
                 if result and not result.success:
                     if step.on_failure == "abort":
@@ -186,15 +202,19 @@ class SwarmEngine:
 
         for attempt in range(max_attempts):
             start = time.monotonic()
-            step_start = datetime.now(timezone.utc)
+            datetime.now(timezone.utc)
 
             if step.condition and not self._evaluate_condition(step.condition):
                 if self.display:
                     self.display.print_step_skip(step.name, step.condition)
                 elapsed = time.monotonic() - start
                 return StepResult(
-                    name=step.name, success=True, output={}, elapsed_seconds=round(elapsed, 3),
-                    retries_used=retries, skipped=True,
+                    name=step.name,
+                    success=True,
+                    output={},
+                    elapsed_seconds=round(elapsed, 3),
+                    retries_used=retries,
+                    skipped=True,
                 )
 
             agent = self.agents.get(step.agent)
@@ -204,13 +224,19 @@ class SwarmEngine:
                 if self.display:
                     self.display.print_step_error(step.name, error_msg)
                 return StepResult(
-                    name=step.name, success=False, output={}, elapsed_seconds=round(elapsed, 3),
-                    retries_used=retries, error=error_msg,
+                    name=step.name,
+                    success=False,
+                    output={},
+                    elapsed_seconds=round(elapsed, 3),
+                    retries_used=retries,
+                    error=error_msg,
                 )
 
             input_data = {}
             for param_key, mem_key in step.input_mapping.items():
-                input_data[param_key] = self.memory.get(mem_key, self._results.get(mem_key, ""))
+                input_data[param_key] = self.memory.get(
+                    mem_key, self._results.get(mem_key, "")
+                )
             if not input_data:
                 input_data = dict(self.memory.items())
 
@@ -231,11 +257,15 @@ class SwarmEngine:
                     self.display.print_step_error(step.name, error_msg)
                 if attempt < max_attempts - 1:
                     retries += 1
-                    time.sleep(step.retry_backoff * (2 ** attempt))
+                    time.sleep(step.retry_backoff * (2**attempt))
                     continue
                 result = StepResult(
-                    name=step.name, success=False, output={}, elapsed_seconds=round(elapsed, 3),
-                    retries_used=retries, error=error_msg,
+                    name=step.name,
+                    success=False,
+                    output={},
+                    elapsed_seconds=round(elapsed, 3),
+                    retries_used=retries,
+                    error=error_msg,
                 )
                 self._execution_history.append(result)
                 return result
@@ -245,14 +275,21 @@ class SwarmEngine:
                 if attempt < max_attempts - 1:
                     retries += 1
                     if self.display:
-                        self.display.print_step_error(step.name, f"{error_msg} (retry {retries}/{step.retry_count})")
-                    time.sleep(step.retry_backoff * (2 ** attempt))
+                        self.display.print_step_error(
+                            step.name,
+                            f"{error_msg} (retry {retries}/{step.retry_count})",
+                        )
+                    time.sleep(step.retry_backoff * (2**attempt))
                     continue
                 if self.display:
                     self.display.print_step_error(step.name, error_msg)
                 result = StepResult(
-                    name=step.name, success=False, output={}, elapsed_seconds=round(elapsed, 3),
-                    retries_used=retries, error=error_msg,
+                    name=step.name,
+                    success=False,
+                    output={},
+                    elapsed_seconds=round(elapsed, 3),
+                    retries_used=retries,
+                    error=error_msg,
                 )
                 self._execution_history.append(result)
                 return result
@@ -264,8 +301,10 @@ class SwarmEngine:
                 retries += 1
                 last_error = output.get("error", "Unknown error")
                 if self.display:
-                    self.display.print_step_error(step.name, f"{last_error} (retry {retries}/{step.retry_count})")
-                time.sleep(step.retry_backoff * (2 ** attempt))
+                    self.display.print_step_error(
+                        step.name, f"{last_error} (retry {retries}/{step.retry_count})"
+                    )
+                time.sleep(step.retry_backoff * (2**attempt))
                 continue
 
             output_key = step.output_key or step.name
@@ -273,7 +312,9 @@ class SwarmEngine:
             self.memory.set(output_key, output, source=step.agent)
 
             if output.get("success") and "response" in output:
-                self.memory.set(f"{step.agent}_context", output["response"], source=step.agent)
+                self.memory.set(
+                    f"{step.agent}_context", output["response"], source=step.agent
+                )
 
             if self.display:
                 self.display.print_step_complete(step.name, success)
@@ -283,13 +324,23 @@ class SwarmEngine:
             if not success and step.on_failure == "skip":
                 pass
             elif not success and step.on_failure == "fallback":
-                fallback = step.config.get("fallback_step") if hasattr(step, 'config') else None
+                fallback = (
+                    step.config.get("fallback_step")
+                    if hasattr(step, "config")
+                    else None
+                )
                 if fallback:
-                    self._results[output_key] = {"response": f"Fallback from {step.name}", "success": True}
+                    self._results[output_key] = {
+                        "response": f"Fallback from {step.name}",
+                        "success": True,
+                    }
 
             result = StepResult(
-                name=step.name, success=success, output=output,
-                elapsed_seconds=round(elapsed, 3), retries_used=retries,
+                name=step.name,
+                success=success,
+                output=output,
+                elapsed_seconds=round(elapsed, 3),
+                retries_used=retries,
                 error="" if success else last_error,
             )
             self._execution_history.append(result)
@@ -297,8 +348,12 @@ class SwarmEngine:
 
         elapsed = time.monotonic() - start
         result = StepResult(
-            name=step.name, success=False, output={}, elapsed_seconds=round(elapsed, 3),
-            retries_used=retries, error=last_error or "Exhausted retries",
+            name=step.name,
+            success=False,
+            output={},
+            elapsed_seconds=round(elapsed, 3),
+            retries_used=retries,
+            error=last_error or "Exhausted retries",
         )
         self._execution_history.append(result)
         return result

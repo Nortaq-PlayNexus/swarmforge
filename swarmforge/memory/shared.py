@@ -20,6 +20,7 @@ class SharedMemory:
         if backend == "redis" and redis_url:
             try:
                 import redis
+
                 self._redis = redis.from_url(redis_url)
             except ImportError:
                 self.backend = "local"
@@ -32,20 +33,24 @@ class SharedMemory:
         with self._lock:
             old = self._store.get(key)
             self._store[key] = value
-            self._history.append({
-                "key": key,
-                "value": self._serialize(value),
-                "source": source,
-                "op": "set",
-            })
-            if old is not None and old != value:
-                self._history.append({
+            self._history.append(
+                {
                     "key": key,
-                    "old": self._serialize(old),
-                    "new": self._serialize(value),
+                    "value": self._serialize(value),
                     "source": source,
-                    "op": "update",
-                })
+                    "op": "set",
+                }
+            )
+            if old is not None and old != value:
+                self._history.append(
+                    {
+                        "key": key,
+                        "old": self._serialize(old),
+                        "new": self._serialize(value),
+                        "source": source,
+                        "op": "update",
+                    }
+                )
 
         self._notify_listeners(key, value)
 

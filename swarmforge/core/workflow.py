@@ -55,38 +55,44 @@ class Workflow:
 
         agents = []
         for a in data.get("agents", []):
-            agents.append(AgentDef(
-                name=a["name"],
-                agent_type=a.get("type", "llm"),
-                model=a.get("model", ""),
-                system_prompt=a.get("system_prompt", ""),
-                tools=a.get("tools", []),
-                config=a.get("config", {}),
-            ))
+            agents.append(
+                AgentDef(
+                    name=a["name"],
+                    agent_type=a.get("type", "llm"),
+                    model=a.get("model", ""),
+                    system_prompt=a.get("system_prompt", ""),
+                    tools=a.get("tools", []),
+                    config=a.get("config", {}),
+                )
+            )
 
         steps = []
         for s in data.get("steps", []):
-            steps.append(StepDef(
-                name=s["name"],
-                agent=s["agent"],
-                input_mapping=s.get("input", {}),
-                output_key=s.get("output", s["name"]),
-                condition=s.get("condition", ""),
-                retry_count=s.get("retry_count", 0),
-                retry_backoff=s.get("retry_backoff", 1.0),
-                on_failure=s.get("on_failure", "abort"),
-                timeout=s.get("timeout"),
-                depends_on=s.get("depends_on", []),
-            ))
+            steps.append(
+                StepDef(
+                    name=s["name"],
+                    agent=s["agent"],
+                    input_mapping=s.get("input", {}),
+                    output_key=s.get("output", s["name"]),
+                    condition=s.get("condition", ""),
+                    retry_count=s.get("retry_count", 0),
+                    retry_backoff=s.get("retry_backoff", 1.0),
+                    on_failure=s.get("on_failure", "abort"),
+                    timeout=s.get("timeout"),
+                    depends_on=s.get("depends_on", []),
+                )
+            )
 
         channels = []
         for c in data.get("channels", []):
-            channels.append(ChannelDef(
-                name=c["name"],
-                source=c["source"],
-                target=c["target"],
-                schema=c.get("schema", "json"),
-            ))
+            channels.append(
+                ChannelDef(
+                    name=c["name"],
+                    source=c["source"],
+                    target=c["target"],
+                    schema=c.get("schema", "json"),
+                )
+            )
 
         return cls(
             name=name,

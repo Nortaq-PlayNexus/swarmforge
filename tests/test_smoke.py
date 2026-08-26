@@ -4,8 +4,10 @@ import pytest
 
 import swarmforge
 
+
 def test_package_importable():
     assert swarmforge is not None
+
 
 def test_import_all_submodules():
     errors = []

@@ -14,7 +14,9 @@ class Message:
     sender: str
     receiver: str
     payload: Any
-    timestamp: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    timestamp: str = field(
+        default_factory=lambda: datetime.now(timezone.utc).isoformat()
+    )
     msg_id: str = ""
     reply_to: str = ""
 

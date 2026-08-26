@@ -49,7 +49,7 @@ class WorkflowVisualizer:
         connections = []
         parallel_groups: list[list[str]] = []
 
-        step_map = {s.name: s for s in self.workflow.steps}
+        {s.name: s for s in self.workflow.steps}
         completed: set[str] = set()
         remaining = list(self.workflow.steps)
 
@@ -68,17 +68,23 @@ class WorkflowVisualizer:
 
         for group in parallel_groups:
             if len(group) > 1:
-                lines.append("    subgraph parallel_group_" + str(parallel_groups.index(group)))
+                lines.append(
+                    "    subgraph parallel_group_" + str(parallel_groups.index(group))
+                )
                 lines.append("        direction LR")
                 for step_name in group:
-                    agent_type = self._agent_types.get(self._resolve_agent_for_step(step_name), "llm")
+                    agent_type = self._agent_types.get(
+                        self._resolve_agent_for_step(step_name), "llm"
+                    )
                     node_id = self._sanitize_id(step_name)
                     label = self._node_label(step_name, agent_type)
                     node_defs.append(f"    {node_id}{label}")
                 lines.append("    end")
             else:
                 step_name = group[0]
-                agent_type = self._agent_types.get(self._resolve_agent_for_step(step_name), "llm")
+                agent_type = self._agent_types.get(
+                    self._resolve_agent_for_step(step_name), "llm"
+                )
                 node_id = self._sanitize_id(step_name)
                 label = self._node_label(step_name, agent_type)
                 node_defs.append(f"    {node_id}{label}")
@@ -92,15 +98,15 @@ class WorkflowVisualizer:
         for step in self.workflow.steps:
             node_id = self._sanitize_id(step.name)
             if step.condition:
-                lines.append(f"    {node_id} -.->|\"condition\"| {node_id}")
+                lines.append(f'    {node_id} -.->|"condition"| {node_id}')
 
         for i, group in enumerate(parallel_groups):
             if len(group) > 1:
                 for step_name in group:
                     node_id = self._sanitize_id(step_name)
-                    connections.append(f"    {node_id} --> |\"data\"| _merge_{i}")
+                    connections.append(f'    {node_id} --> |"data"| _merge_{i}')
                 merge_id = f"_merge_{i}"
-                node_defs.append(f"    {merge_id}([\"Merge\"])")
+                node_defs.append(f'    {merge_id}(["Merge"])')
                 next_steps = []
                 for s in self.workflow.steps:
                     if any(d in group for d in s.depends_on):
@@ -126,7 +132,7 @@ class WorkflowVisualizer:
         return f"## Workflow: {self.workflow.name}\n\n```mermaid\n{mermaid}\n```"
 
     def get_parallel_groups(self) -> list[list[str]]:
-        step_map = {s.name: s for s in self.workflow.steps}
+        {s.name: s for s in self.workflow.steps}
         completed: set[str] = set()
         remaining = list(self.workflow.steps)
         groups: list[list[str]] = []
@@ -150,9 +156,11 @@ class WorkflowVisualizer:
         flows = []
         for step in self.workflow.steps:
             for param, source in step.input_mapping.items():
-                flows.append({
-                    "from": source,
-                    "to": step.name,
-                    "parameter": param,
-                })
+                flows.append(
+                    {
+                        "from": source,
+                        "to": step.name,
+                        "parameter": param,
+                    }
+                )
         return flows

@@ -17,13 +17,16 @@ class Display:
                 f"[bold cyan]SwarmForge[/bold cyan]\n\n"
                 f"Workflow: [bold]{name}[/bold]\n"
                 f"Steps: {steps}",
-                border_style="blue", expand=True,
+                border_style="blue",
+                expand=True,
             )
         )
         console.print()
 
     def print_step_start(self, step: str, agent: str):
-        console.print(f"  [bold blue]→[/bold blue] [{step}] Running agent [cyan]{agent}[/cyan]...")
+        console.print(
+            f"  [bold blue]→[/bold blue] [{step}] Running agent [cyan]{agent}[/cyan]..."
+        )
 
     def print_step_complete(self, step: str, success: bool):
         icon = "[green]✓[/green]" if success else "[red]✗[/red]"
@@ -40,7 +43,10 @@ class Display:
         table = Table(box=box.ROUNDED, title="Workflow Results")
         table.add_column("Metric", style="bold")
         table.add_column("Value", style="cyan")
-        table.add_row("Status", "[green]SUCCESS[/green]" if result.get("success") else "[red]FAILED[/red]")
+        table.add_row(
+            "Status",
+            "[green]SUCCESS[/green]" if result.get("success") else "[red]FAILED[/red]",
+        )
         table.add_row("Steps Completed", str(result.get("steps_completed", 0)))
         table.add_row("Elapsed", f"{result.get('elapsed_seconds', 0)}s")
         console.print(table)
@@ -52,7 +58,8 @@ class Display:
             Panel(
                 f"[bold cyan]Workflow Diagram[/bold cyan]\n\n"
                 f"```mermaid\n{mermaid_code}\n```",
-                border_style="blue", expand=True,
+                border_style="blue",
+                expand=True,
             )
         )
         console.print()
@@ -118,14 +125,15 @@ class Display:
                 "    - name: researcher\n"
                 "      type: llm\n"
                 "      model: gpt-4o\n"
-                "      system_prompt: \"You are a research agent.\"\n"
+                '      system_prompt: "You are a research agent."\n'
                 "  steps:\n"
                 "    - name: research\n"
                 "      agent: researcher\n"
                 "      input:\n"
-                "        topic: \"AI safety\"\n\n"
+                '        topic: "AI safety"\n\n'
                 "[bold]Agent Types:[/bold]  llm | tool | router | aggregate",
-                border_style="blue", expand=True,
+                border_style="blue",
+                expand=True,
             )
         )
         console.print()

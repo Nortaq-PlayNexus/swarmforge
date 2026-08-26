@@ -18,28 +18,42 @@ def build_parser() -> argparse.ArgumentParser:
         prog="swarmforge",
         description="Multi-agent AI orchestrator — design, deploy, and monitor agent workflows.",
     )
-    parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
+    parser.add_argument(
+        "--version", action="version", version=f"%(prog)s {__version__}"
+    )
 
     sub = parser.add_subparsers(dest="command")
 
     run = sub.add_parser("run", help="Execute a workflow")
     run.add_argument("workflow", type=str, help="Path to workflow YAML file")
-    run.add_argument("--var", action="append", default=[], help="Override variable: --var key=value")
+    run.add_argument(
+        "--var", action="append", default=[], help="Override variable: --var key=value"
+    )
 
     validate = sub.add_parser("validate", help="Validate a workflow file")
     validate.add_argument("workflow", type=str, help="Path to workflow YAML file")
 
-    info = sub.add_parser("info", help="Show SwarmForge info and built-in agents")
+    sub.add_parser("info", help="Show SwarmForge info and built-in agents")
 
     sub.add_parser("templates", help="List available workflow templates")
 
     new_cmd = sub.add_parser("new", help="Scaffold a workflow from a template")
-    new_cmd.add_argument("--template", type=str, required=True,
-                         help="Template name (research, data-pipeline, code-review, customer-support)")
-    new_cmd.add_argument("--output", type=str, default="workflow.yaml",
-                         help="Output file path (default: workflow.yaml)")
+    new_cmd.add_argument(
+        "--template",
+        type=str,
+        required=True,
+        help="Template name (research, data-pipeline, code-review, customer-support)",
+    )
+    new_cmd.add_argument(
+        "--output",
+        type=str,
+        default="workflow.yaml",
+        help="Output file path (default: workflow.yaml)",
+    )
 
-    visualize = sub.add_parser("visualize", help="Generate Mermaid diagram from workflow YAML")
+    visualize = sub.add_parser(
+        "visualize", help="Generate Mermaid diagram from workflow YAML"
+    )
     visualize.add_argument("workflow", type=str, help="Path to workflow YAML file")
 
     return parser
@@ -65,10 +79,13 @@ def main() -> int:
     if args.command == "new":
         template_name = args.template
         if template_name not in ALL_TEMPLATES:
-            display.print_error(f"Unknown template '{template_name}'. Available: {', '.join(ALL_TEMPLATES.keys())}")
+            display.print_error(
+                f"Unknown template '{template_name}'. Available: {', '.join(ALL_TEMPLATES.keys())}"
+            )
             return 1
 
         import copy
+
         template_data = copy.deepcopy(ALL_TEMPLATES[template_name])
         output_path = Path(args.output)
 
@@ -107,7 +124,9 @@ def main() -> int:
             spec = yaml.safe_load(f)
         try:
             wf = Workflow.from_dict(spec)
-            display.print_success(f"Workflow '{wf.name}' is valid ({len(wf.agents)} agents, {len(wf.steps)} steps)")
+            display.print_success(
+                f"Workflow '{wf.name}' is valid ({len(wf.agents)} agents, {len(wf.steps)} steps)"
+            )
             return 0
         except Exception as e:
             display.print_error(f"Invalid workflow: {e}")
