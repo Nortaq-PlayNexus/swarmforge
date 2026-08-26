@@ -18,9 +18,7 @@ def build_parser() -> argparse.ArgumentParser:
         prog="swarmforge",
         description="Multi-agent AI orchestrator — design, deploy, and monitor agent workflows.",
     )
-    parser.add_argument(
-        "--version", action="version", version=f"%(prog)s {__version__}"
-    )
+    parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
 
     sub = parser.add_subparsers(dest="command")
 
@@ -51,9 +49,7 @@ def build_parser() -> argparse.ArgumentParser:
         help="Output file path (default: workflow.yaml)",
     )
 
-    visualize = sub.add_parser(
-        "visualize", help="Generate Mermaid diagram from workflow YAML"
-    )
+    visualize = sub.add_parser("visualize", help="Generate Mermaid diagram from workflow YAML")
     visualize.add_argument("workflow", type=str, help="Path to workflow YAML file")
 
     return parser

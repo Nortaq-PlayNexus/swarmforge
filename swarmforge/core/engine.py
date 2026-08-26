@@ -29,9 +29,7 @@ class StepResult:
 
 
 class SwarmEngine:
-    def __init__(
-        self, workflow: Workflow, display: Any = None, config: dict | None = None
-    ):
+    def __init__(self, workflow: Workflow, display: Any = None, config: dict | None = None):
         self.workflow = workflow
         self.display = display
         self.config = config or {}
@@ -80,9 +78,7 @@ class SwarmEngine:
         self._abort = False
 
         if self.display:
-            self.display.print_workflow_start(
-                self.workflow.name, len(self.workflow.steps)
-            )
+            self.display.print_workflow_start(self.workflow.name, len(self.workflow.steps))
 
         self._resolve_variables()
 
@@ -234,9 +230,7 @@ class SwarmEngine:
 
             input_data = {}
             for param_key, mem_key in step.input_mapping.items():
-                input_data[param_key] = self.memory.get(
-                    mem_key, self._results.get(mem_key, "")
-                )
+                input_data[param_key] = self.memory.get(mem_key, self._results.get(mem_key, ""))
             if not input_data:
                 input_data = dict(self.memory.items())
 
@@ -312,9 +306,7 @@ class SwarmEngine:
             self.memory.set(output_key, output, source=step.agent)
 
             if output.get("success") and "response" in output:
-                self.memory.set(
-                    f"{step.agent}_context", output["response"], source=step.agent
-                )
+                self.memory.set(f"{step.agent}_context", output["response"], source=step.agent)
 
             if self.display:
                 self.display.print_step_complete(step.name, success)
@@ -324,11 +316,7 @@ class SwarmEngine:
             if not success and step.on_failure == "skip":
                 pass
             elif not success and step.on_failure == "fallback":
-                fallback = (
-                    step.config.get("fallback_step")
-                    if hasattr(step, "config")
-                    else None
-                )
+                fallback = step.config.get("fallback_step") if hasattr(step, "config") else None
                 if fallback:
                     self._results[output_key] = {
                         "response": f"Fallback from {step.name}",

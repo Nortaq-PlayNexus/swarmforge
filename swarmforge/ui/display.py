@@ -24,9 +24,7 @@ class Display:
         console.print()
 
     def print_step_start(self, step: str, agent: str):
-        console.print(
-            f"  [bold blue]→[/bold blue] [{step}] Running agent [cyan]{agent}[/cyan]..."
-        )
+        console.print(f"  [bold blue]→[/bold blue] [{step}] Running agent [cyan]{agent}[/cyan]...")
 
     def print_step_complete(self, step: str, success: bool):
         icon = "[green]✓[/green]" if success else "[red]✗[/red]"
@@ -56,8 +54,7 @@ class Display:
         console.print()
         console.print(
             Panel(
-                f"[bold cyan]Workflow Diagram[/bold cyan]\n\n"
-                f"```mermaid\n{mermaid_code}\n```",
+                f"[bold cyan]Workflow Diagram[/bold cyan]\n\n```mermaid\n{mermaid_code}\n```",
                 border_style="blue",
                 expand=True,
             )

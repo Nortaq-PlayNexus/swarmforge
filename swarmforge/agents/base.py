@@ -41,15 +41,11 @@ class BaseAgent(ABC):
                 expected_type = prop.get("type")
                 if expected_type == "string" and not isinstance(input_data[key], str):
                     errors.append(f"Field '{key}' must be a string")
-                elif expected_type == "number" and not isinstance(
-                    input_data[key], (int, float)
-                ):
+                elif expected_type == "number" and not isinstance(input_data[key], (int, float)):
                     errors.append(f"Field '{key}' must be a number")
                 elif expected_type == "array" and not isinstance(input_data[key], list):
                     errors.append(f"Field '{key}' must be an array")
-                elif expected_type == "object" and not isinstance(
-                    input_data[key], dict
-                ):
+                elif expected_type == "object" and not isinstance(input_data[key], dict):
                     errors.append(f"Field '{key}' must be an object")
         return errors
 
@@ -96,9 +92,7 @@ class LLMAgent(BaseAgent):
     def __init__(self, name: str, config: dict[str, Any] | None = None):
         super().__init__(name, config)
         self.model = self.config.get("model", "gpt-4o")
-        self.system_prompt = self.config.get(
-            "system_prompt", "You are a helpful AI assistant."
-        )
+        self.system_prompt = self.config.get("system_prompt", "You are a helpful AI assistant.")
         self.temperature = self.config.get("temperature", 0.7)
         self.base_url = self.config.get("base_url", "https://api.openai.com/v1")
         self.api_key = self.config.get("api_key", "")
@@ -217,9 +211,7 @@ class PythonAgent(BaseAgent):
 
     def __init__(self, name: str, config: dict[str, Any] | None = None):
         super().__init__(name, config)
-        self.allowed_modules = self.config.get(
-            "allowed_modules", ["json", "math", "re"]
-        )
+        self.allowed_modules = self.config.get("allowed_modules", ["json", "math", "re"])
 
     def run(self, input_data: dict[str, Any]) -> dict[str, Any]:
         code = input_data.get("code", "")

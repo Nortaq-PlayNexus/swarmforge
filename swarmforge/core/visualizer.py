@@ -23,9 +23,7 @@ class WorkflowVisualizer:
     def __init__(self, workflow: Workflow):
         self.workflow = workflow
         self._step_names: set[str] = {s.name for s in workflow.steps}
-        self._agent_types: dict[str, str] = {
-            a.name: a.agent_type for a in workflow.agents
-        }
+        self._agent_types: dict[str, str] = {a.name: a.agent_type for a in workflow.agents}
 
     def _sanitize_id(self, name: str) -> str:
         return name.replace("-", "_").replace(" ", "_").replace(".", "_")
@@ -68,9 +66,7 @@ class WorkflowVisualizer:
 
         for group in parallel_groups:
             if len(group) > 1:
-                lines.append(
-                    "    subgraph parallel_group_" + str(parallel_groups.index(group))
-                )
+                lines.append("    subgraph parallel_group_" + str(parallel_groups.index(group)))
                 lines.append("        direction LR")
                 for step_name in group:
                     agent_type = self._agent_types.get(
@@ -82,9 +78,7 @@ class WorkflowVisualizer:
                 lines.append("    end")
             else:
                 step_name = group[0]
-                agent_type = self._agent_types.get(
-                    self._resolve_agent_for_step(step_name), "llm"
-                )
+                agent_type = self._agent_types.get(self._resolve_agent_for_step(step_name), "llm")
                 node_id = self._sanitize_id(step_name)
                 label = self._node_label(step_name, agent_type)
                 node_defs.append(f"    {node_id}{label}")
