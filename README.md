@@ -1,13 +1,31 @@
-<div align="center">
+<p align="center">
+  <img src="https://img.shields.io/badge/SWARMFORGE-AGENT%20ORCHESTRATOR-00E5FF?style=flat-square&labelColor=0a0e1a" alt="swarmforge" />
+</p>
 
-# SwarmForge
+# SWARMFORGE :: MULTI-AGENT ORCHESTRATOR
 
-**Design, deploy, and monitor collaborative multi-agent AI workflows.**
+**Design, deploy, and monitor collaborative multi-agent AI workflows.** YAML-defined agent pipelines with shared memory and typed message channels — run with a single command.
 
-[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Python](https://img.shields.io/badge/Python-%3E%3D3.11-3776AB?logo=python&logoColor=white)](https://python.org)
+<p align="center">
+  <img src="https://img.shields.io/badge/PYTHON-%3E%3D3.11-ffc430?style=flat-square&logo=python&logoColor=ffc430&labelColor=0a0e1a" alt="python"/>
+  <img src="https://img.shields.io/badge/DEFS-YAML-B8FF1E?style=flat-square&labelColor=0a0e1a" alt="yaml"/>
+  <img src="https://img.shields.io/badge/CHANNELS-TYPED-3dd5ff?style=flat-square&labelColor=0a0e1a" alt="channels"/>
+  <img src="https://img.shields.io/badge/MEMORY-SHARED-00E5FF?style=flat-square&labelColor=0a0e1a" alt="memory"/>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/LICENSE-MIT-ff3b3b?style=flat-square&labelColor=0a0e1a" alt="license"/></a>
+</p>
 
-</div>
+<pre>
+IDENT ......... SWARM-01
+CLASS ......... MULTI-AGENT ORCHESTRATOR
+STATUS ........ ONLINE / ACTIVE
+DEFS .......... YAML WORKFLOWS
+CHANNELS ...... LLM · TOOL · ROUTER · AGGREGATE
+LINK .......... /swarmforge
+</pre>
+
+---
+
+## // 01 :: SIGNAL
 
 **SwarmForge** is a multi-agent AI orchestrator that lets you define agent workflows in YAML and run them with a single command. Agents share memory, communicate through typed message channels, and collaborate to solve complex tasks.
 
@@ -15,7 +33,7 @@ No SaaS. No vendor lock-in. Just agents working together.
 
 ---
 
-\n---\n\n## Screenshots\n\n| Preview | Description |\n|---------|-------------|\n| ![screenshot](docs/screenshots/screenshot.png) | Main interface |\n| ![screenshot](docs/screenshots/demo.gif) | Demo |\n\n*Screenshots coming soon — placeholders auto-generated. Replace docs/screenshots/ with real captures.*\n\n## Features
+## Features
 
 ### Agent types
 
