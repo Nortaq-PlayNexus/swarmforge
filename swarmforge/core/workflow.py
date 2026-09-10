@@ -1,105 +1,71 @@
-"""Workflow definition — parses and validates workflow YAML specs."""
+﻿"""Workflow definition - parses and validates workflow YAML specs."""
 
 from __future__ import annotations
-from dataclasses import dataclass, field
-from typing import Any, Optional
+from typing import Any
+from pydantic import BaseModel, Field, field_validator
 
 
-@dataclass
-class AgentDef:
+class AgentDef(BaseModel):
     name: str
-    agent_type: str
-    model: str = ""
+    agent_type: str = "llm"
+    model: str = "gpt-4o"
     system_prompt: str = ""
-    tools: list[str] = field(default_factory=list)
-    config: dict[str, Any] = field(default_factory=dict)
+    tools: list[str] = Field(default_factory=list)
+    config: dict[str, Any] = Field(default_factory=dict)
+
+    @field_validator("agent_type")
+    @classmethod
+    def validate_agent_type(cls, v):
+        valid = ["llm", "tool", "orchestrator", "reviewer"]
+        if v not in valid:
+            raise ValueError(f"agent_type must be one of {valid}")
+        return v
 
 
-@dataclass
-class StepDef:
+class StepDef(BaseModel):
     name: str
     agent: str
-    input_mapping: dict[str, str] = field(default_factory=dict)
-    output_key: str = ""
-    condition: str = ""
-    retry_count: int = 0
-    retry_backoff: float = 1.0
-    on_failure: str = "abort"
-    timeout: Optional[int] = None
-    depends_on: list[str] = field(default_factory=list)
+    input: dict[str, Any] = Field(default_factory=dict)
+    output: str = ""
+
+    @field_validator("agent")
+    @classmethod
+    def validate_agent_exists(cls, v, info):
+        # Will be validated against agents list in Workflow
+        return v
 
 
-@dataclass
-class ChannelDef:
+class ChannelDef(BaseModel):
     name: str
     source: str
     target: str
-    schema: str = "json"
 
 
-@dataclass
-class Workflow:
+class WorkflowSpec(BaseModel):
     name: str
-    description: str
+    description: str = ""
     agents: list[AgentDef]
     steps: list[StepDef]
-    channels: list[ChannelDef] = field(default_factory=list)
-    variables: dict[str, Any] = field(default_factory=dict)
-    entry_point: str = ""
+    channels: list[ChannelDef] = Field(default_factory=list)
+    variables: dict[str, Any] = Field(default_factory=dict)
 
+    @field_validator("agents")
     @classmethod
-    def from_dict(cls, data: dict) -> Workflow:
-        name = data.get("name", "unnamed")
-        desc = data.get("description", "")
-        variables = data.get("variables", {})
+    def validate_agents_nonempty(cls, v):
+        if not v:
+            raise ValueError("at least one agent is required")
+        return v
 
-        agents = []
-        for a in data.get("agents", []):
-            agents.append(
-                AgentDef(
-                    name=a["name"],
-                    agent_type=a.get("type", "llm"),
-                    model=a.get("model", ""),
-                    system_prompt=a.get("system_prompt", ""),
-                    tools=a.get("tools", []),
-                    config=a.get("config", {}),
-                )
-            )
+    @field_validator("steps")
+    @classmethod
+    def validate_steps_match_agents(cls, v, info):
+        agent_names = {a.name for a in info.data.agents} if hasattr(info, "data") else set()
+        for step in v:
+            if step.agent not in agent_names:
+                raise ValueError(f"step '{step.name}' references unknown agent '{step.agent}'")
+        return v
 
-        steps = []
-        for s in data.get("steps", []):
-            steps.append(
-                StepDef(
-                    name=s["name"],
-                    agent=s["agent"],
-                    input_mapping=s.get("input", {}),
-                    output_key=s.get("output", s["name"]),
-                    condition=s.get("condition", ""),
-                    retry_count=s.get("retry_count", 0),
-                    retry_backoff=s.get("retry_backoff", 1.0),
-                    on_failure=s.get("on_failure", "abort"),
-                    timeout=s.get("timeout"),
-                    depends_on=s.get("depends_on", []),
-                )
-            )
 
-        channels = []
-        for c in data.get("channels", []):
-            channels.append(
-                ChannelDef(
-                    name=c["name"],
-                    source=c["source"],
-                    target=c["target"],
-                    schema=c.get("schema", "json"),
-                )
-            )
-
-        return cls(
-            name=name,
-            description=desc,
-            agents=agents,
-            steps=steps,
-            channels=channels,
-            variables=variables,
-            entry_point=data.get("entry_point", ""),
-        )
+def from_dict(data: dict[str, Any]) -> WorkflowSpec:
+    """Parse and validate a workflow YAML dict."""
+    return WorkflowSpec.model_validate(data)
